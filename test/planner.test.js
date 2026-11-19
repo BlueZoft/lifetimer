@@ -28,10 +28,10 @@ test('schedules remaining task time in order and accounts for movement within an
     ['a', 'focus', 5], ['a', 'break', 5],
     ['b', 'focus', 20], ['b', 'break', 5],
   ]);
-  assert.equal(plan.blocks[0].end, local(19, 8, 45).getTime());
+  assert.equal(plan.blocks[0].end, local(19, 8, 45).getTime() + 20_000);
   assert.deepEqual(plan.blocks.slice(1).map(block => block.start),
     plan.blocks.slice(0, -1).map(block => block.end));
-  assert.equal(plan.remainingMinutes, 720 - 85);
+  assert.equal(plan.remainingMinutes, 720 - 86);
   assert.deepEqual(plan.unscheduled, []);
 });
 
@@ -40,12 +40,12 @@ test('reports work that overflows the daily window and avoids starting a pause i
     { id: 'a', title: 'Draft', minutes: 50 },
     { id: 'b', title: 'Review', minutes: 20 },
   ];
-  const plan = buildPlan(tasks, DEFAULT_SETTINGS, local(19, 19, 25));
+  const plan = buildPlan(tasks, DEFAULT_SETTINGS, local(19, 19, 24));
   assert.deepEqual(plan.blocks.map(block => [block.kind, block.minutes]), [
     ['focus', 30], ['break', 5],
   ]);
   assert.equal(plan.remainingMinutes, 0);
-  assert.equal(plan.blocks.at(-1).end, plan.windowEnd);
+  assert.equal(plan.blocks.at(-1).end, plan.windowEnd - 40_000);
   assert.deepEqual(plan.unscheduled, [
     { taskId: 'a', title: 'Draft', minutes: 20 },
     { taskId: 'b', title: 'Review', minutes: 20 },
