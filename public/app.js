@@ -97,6 +97,10 @@ function chosenBlock() {
   return plan.blocks.find(block => block.kind === 'focus');
 }
 
+function nextFocusNow(now) {
+  return buildPlan(state.tasks, state.settings, new Date(now)).blocks.find(block => block.kind === 'focus');
+}
+
 function calculatePlan(now) {
   const session = state.session;
   if (!session) return buildPlan(state.tasks, state.settings, new Date(state.anchor));
@@ -133,6 +137,7 @@ function renderWater() {
 
 function renderPlan() {
   const next = chosenBlock();
+  const now = Date.now();
   const rows = [];
   if (state.session) {
     rows.push(timelineRow({
@@ -143,8 +148,11 @@ function renderPlan() {
     }, 'is-next', 'Current session'));
   }
   for (const block of plan.blocks) {
-    const type = block.kind === 'break' ? 'is-break' : block === next && !state.session ? 'is-next' : '';
-    rows.push(timelineRow(block, type));
+    const classes = [];
+    if (block.kind === 'break') classes.push('is-break');
+    if (block.end <= now) classes.push('is-past');
+    if (block === next && !state.session && block.end > now) classes.push('is-next');
+    rows.push(timelineRow(block, classes.join(' ')));
   }
   $('timeline').replaceChildren(...rows);
   $('empty-plan').hidden = rows.length > 0;
@@ -173,7 +181,7 @@ function timelineRow(block, type, description) {
 
 function renderTimer(now) {
   const { session, settings } = state;
-  const next = chosenBlock();
+  const next = session ? null : nextFocusNow(now);
   const dial = $('timer-dial');
   const start = $('focus-start');
   let remaining = (next?.minutes ?? settings.focusMinutes) * MINUTE;
@@ -182,14 +190,17 @@ function renderTimer(now) {
   let status = 'Ready to focus';
   let timerLabel = 'Focus timer';
   let caption = next ? 'Up next' : '';
-  let taskTitle = next?.title ?? 'Plan your first block';
+  const hasWork = state.tasks.some(task => task.completedMinutes < task.minutes);
+  let taskTitle = next?.title ?? (hasWork ? 'Work window closed' : 'Plan your first block');
   let copy = next
-    ? `${duration(next.minutes)} of focus, with breaks as needed.`
-    : state.tasks.some(task => task.completedMinutes < task.minutes)
+    ? (next.start > now + MINUTE
+      ? `Your work window opens at ${timeFormat.format(next.start)}.`
+      : `${duration(next.minutes)} of focus, with breaks as needed.`)
+    : hasWork
       ? 'Unfinished tasks stay on your list for the next workable window.'
       : 'Add a task to build your plan.';
-  let action = next ? 'Start focus' : 'Add task';
-  let actionIcon = next ? 'play' : 'plus';
+  let action = next ? 'Start focus' : hasWork ? 'Check window' : 'Add task';
+  let actionIcon = next ? 'play' : hasWork ? 'refresh' : 'plus';
 
   if (session) {
     const phases = activePhases();
@@ -265,13 +276,14 @@ function renderTasks() {
   $('task-list').replaceChildren(...rows);
 }
 
-function setTaskEditor(task) {
+function setTaskEditor(task, focusInput = true) {
   editingId = task?.id;
+  taskForm.elements.title.setCustomValidity('');
   taskForm.elements.title.value = task?.title ?? '';
   taskForm.elements.minutes.value = task?.minutes ?? state.settings.focusMinutes;
   $('task-submit-label').textContent = task ? 'Save task' : 'Add task';
   $('cancel-edit').hidden = !task;
-  taskForm.elements.title.focus();
+  if (focusInput) taskForm.elements.title.focus();
 }
 
 function showDialog(id, add = false) {
@@ -313,8 +325,10 @@ function reminders() {
       reminders.push(makeReminder(session.id + '-' + phase.start, start + phase.start, title, body, 'session'));
     }
     const finish = phases.at(-1).end;
-    reminders.push(makeReminder(session.id + '-finish', start + finish, 'Session finished',
-      'Open LifeTimer when you’re ready to plan your next block.', 'session'));
+    if (chosenBlock()?.start !== start + finish) {
+      reminders.push(makeReminder(session.id + '-finish', start + finish, 'Session finished',
+        'Open LifeTimer when you’re ready to plan your next block.', 'session'));
+    }
   }
 
   if (!session || session.runningSince !== null) {
@@ -337,17 +351,19 @@ function pushStatus(message) {
 }
 
 function syncPush() {
-  if (!subscription || pushBusy) return pushQueue;
+  if (!subscription || pushBusy) return Promise.resolve(false);
   const currentSubscription = subscription;
   const now = Date.now();
   const upcoming = reminders().filter(reminder => reminder.at > now);
   pushQueue = pushQueue.then(async () => {
-    if (subscription !== currentSubscription) return;
+    if (subscription !== currentSubscription) return false;
     try {
       await saveReminders(currentSubscription, upcoming);
       pushStatus();
+      return true;
     } catch (error) {
       pushStatus(error.message);
+      return false;
     }
   });
   return pushQueue;
@@ -383,7 +399,9 @@ function endSession(now, completed) {
 function tick() {
   const now = Date.now();
   if (dayKey(now) !== previousDay || buildPlan([], state.settings, new Date(now)).windowEnd !== plan.windowEnd) {
-    previousDay = dayKey(now);
+    const day = dayKey(now);
+    if (day !== previousDay) shownReminders.clear();
+    previousDay = day;
     // Re-anchor when a different wake window begins.
     if (!state.session) refresh({ replan: true });
     else renderWater();
@@ -391,6 +409,7 @@ function tick() {
 
   const due = reminders().filter(reminder => reminder.id !== testReminder?.id && reminder.at > previousTick
     && reminder.at <= now && now - reminder.at < 90_000 && !shownReminders.has(reminder.id));
+  if (plan.blocks.some(block => block.end > previousTick && block.end <= now)) renderPlan();
   due.forEach(reminder => shownReminders.add(reminder.id));
   const latest = due.at(-1);
   if (latest) notify(latest.title, latest.body);
@@ -463,16 +482,17 @@ document.querySelectorAll('[data-dialog]').forEach(button => {
 document.querySelectorAll('[data-close]').forEach(button => {
   button.addEventListener('click', () => button.closest('dialog').close());
 });
-$('tasks-dialog').addEventListener('close', () => setTaskEditor());
+$('tasks-dialog').addEventListener('close', () => setTaskEditor(undefined, false));
 $('cancel-edit').addEventListener('click', () => setTaskEditor());
+taskForm.elements.title.addEventListener('input', () => taskForm.elements.title.setCustomValidity(''));
 taskForm.addEventListener('submit', event => {
   event.preventDefault();
   const data = new FormData(taskForm);
   const title = data.get('title').trim();
   const minutes = Number(data.get('minutes'));
   if (!title) {
-    notify('Enter a task name', 'A task needs a short name for the plan.');
-    taskForm.elements.title.focus();
+    taskForm.elements.title.setCustomValidity('Enter a task name.');
+    taskForm.elements.title.reportValidity();
     return;
   }
   const task = state.tasks.find(item => item.id === editingId);
@@ -534,7 +554,10 @@ $('demo-tasks').addEventListener('click', () => {
 });
 $('focus-start').addEventListener('click', startOrPause);
 $('focus-end').addEventListener('click', () => {
-  if (state.session) endSession(Date.now(), focusElapsed(activePhases(), sessionElapsed(state.session, Date.now())) === state.session.minutes * MINUTE);
+  if (!state.session) return;
+  const now = Date.now();
+  const earned = focusElapsed(activePhases(), sessionElapsed(state.session, now));
+  endSession(now, earned === state.session.minutes * MINUTE);
 });
 $('water-add').addEventListener('click', () => adjustWater(250));
 $('water-undo').addEventListener('click', () => adjustWater(-250));
@@ -557,8 +580,11 @@ $('enable-push').addEventListener('click', async () => {
 $('test-push').addEventListener('click', async () => {
   const at = Date.now() + 5000;
   testReminder = makeReminder('test-' + at, at, 'LifeTimer test', 'Background reminders are reaching this device.', 'test');
-  await syncPush();
-  notify('Test requested', 'Look for a system notification in about 5 seconds.');
+  if (await syncPush()) {
+    pushStatus('Test queued. Close this tab and look for a system notification in about 5 seconds.');
+  } else {
+    testReminder = undefined;
+  }
 });
 $('disable-push').addEventListener('click', async () => {
   pushBusy = true;

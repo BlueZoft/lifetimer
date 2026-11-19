@@ -16,13 +16,15 @@ Open [LifeTimer](http://localhost:3000) and keep the terminal running. To give L
 ## Plan and focus
 
 1. Set your wake time, sleep, focus length, and water goal in **Settings**. LifeTimer starts with eight hours of sleep, a 40-minute focus block, and a 2.5 L water goal. Sleep is adjustable from seven to nine hours. The planner reserves one hour each for personal care, exercise, meals, and buffer, leaving 11–13 workable hours that include focus breaks.
-2. Add tasks with estimated minutes. Use the arrows in **Tasks** to set their priority. **Today’s plan** splits unfinished work in that order and shows how much won’t fit in the current window. **Replan** rebuilds the schedule from the current time. The four reserved hours are a budget allowance. LifeTimer schedules focus and recovery, while you choose when to handle the other activities.
+2. Add tasks with estimated minutes. Use the arrows in **Tasks** to set their priority. **Today’s plan** splits unfinished work in that order and shows how much won’t fit in the current window. **Replan** rebuilds the schedule from the current time. LifeTimer puts the workable window immediately after your configured wake time and leaves the last four waking hours outside the plan. You choose when to handle the reserved activities.
 3. Select **Start focus** to begin the next task. You can pause and resume or end early. Focus time credits the task estimate, and unfinished tasks carry forward. Scheduled prompts invite you to start a block. You control when the timer starts.
 4. Use **250 mL** under **Hydration** to log water. The total resets for each local calendar day. Use the minus icon to undo an entry.
 
 ## Background reminders
 
 Open **Settings → Enable background reminders**, allow notifications, then select **Send test** and close the tab or app window. In-app prompts work while LifeTimer is open. Once background reminders are enabled, the server queues future prompts so a supported browser can deliver them after the tab closes.
+
+The queue covers the current plan and waking day. Open LifeTimer at the start of the next day to schedule new reminders. Closing the window during a running focus session lets its timer continue. Pause it first if you want the countdown to wait.
 
 - Leave the Node server running on a computer that stays awake and can reach your browser’s push provider. Browser background behavior, operating system notification settings, and force-quitting the browser affect delivery. [Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 - Use localhost on your own computer or HTTPS for remote access. On iOS and iPadOS, install LifeTimer to the Home Screen from its HTTPS address, then enable notifications from the installed app. [WebKit guidance](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
