@@ -103,3 +103,35 @@ test('scheduled reminders deliver after restart and resyncing an unchanged plan 
   await delay(1200);
   assert.equal(calls.length, 1);
 });
+
+test('a fortnight queue survives restart, drops expired reminders, and can be cancelled', async t => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'lifetimer-fortnight-'));
+  t.after(() => rm(dataDir, { recursive: true, force: true }));
+  const calls = [];
+  const sendPush = async (...args) => { calls.push(args); return { statusCode: 201 }; };
+  const initial = await runningServer(dataDir, sendPush);
+  const now = Date.now();
+  const entries = [
+    reminder('expired', now - 3 * 60_000),
+    reminder('day-three', now + 3 * 24 * 60 * 60_000),
+    reminder('day-fourteen', now + 14 * 24 * 60 * 60_000),
+  ];
+  try {
+    assert.equal((await putSchedule(initial.url, { subscription, reminders: entries })).status, 204);
+    assert.equal((await putSchedule(initial.url, {
+      subscription,
+      reminders: [reminder('outside-horizon', now + 17 * 24 * 60 * 60_000)],
+    })).status, 400);
+  } finally {
+    await initial.stop();
+  }
+
+  const restarted = await runningServer(dataDir, sendPush);
+  t.after(restarted.stop);
+  const saved = JSON.parse(await readFile(join(dataDir, 'schedule.json'), 'utf8'));
+  assert.deepEqual(saved.reminders, entries.slice(1));
+  await delay(1100);
+  assert.equal(calls.length, 0);
+  assert.equal((await putSchedule(restarted.url, { subscription, reminders: [] })).status, 204);
+  assert.deepEqual(JSON.parse(await readFile(join(dataDir, 'schedule.json'), 'utf8')).reminders, []);
+});

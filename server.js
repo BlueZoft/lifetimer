@@ -8,10 +8,11 @@ import webPush from 'web-push';
 
 const PUBLIC_DIR = fileURLToPath(new URL('./public', import.meta.url));
 const DEFAULT_DATA_DIR = fileURLToPath(new URL('./.lifetimer', import.meta.url));
-const MAX_SCHEDULE_AHEAD = 48 * 60 * 60 * 1000;
+// A fortnight plan can include a start date tomorrow and an overnight waking window.
+const MAX_SCHEDULE_AHEAD = 16 * 24 * 60 * 60 * 1000;
 const DELIVERY_GRACE = 2 * 60 * 1000;
-const MAX_REMINDERS = 250;
-const MAX_BODY_BYTES = 256 * 1024;
+const MAX_REMINDERS = 1800;
+const MAX_BODY_BYTES = 512 * 1024;
 const LOOPBACK_HOST = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/i;
 const PUSH_HOSTS = new Set([
   'fcm.googleapis.com',
@@ -209,7 +210,7 @@ export function createLifeTimerServer({
     let status;
     try {
       const { statusCode } = await sendPush(subscription, JSON.stringify({ title, body, tag }), {
-        TTL: Math.ceil(DELIVERY_GRACE / 1000),
+        TTL: Math.max(1, Math.ceil((entry.at + DELIVERY_GRACE - Date.now()) / 1000)),
         urgency: 'high',
         timeout: 10_000,
         vapidDetails: { subject, ...keys },
@@ -230,7 +231,8 @@ export function createLifeTimerServer({
     let reminders = schedule.reminders.filter(reminder => reminder.id !== id);
     let sent = schedule.sent;
     if (status >= 200 && status < 300) {
-      sent = [...sent.slice(-1999), { id, until: Date.now() + MAX_SCHEDULE_AHEAD }];
+      sent = [...sent.filter(receipt => receipt.until > Date.now()).slice(-3599),
+        { id, until: Date.now() + MAX_SCHEDULE_AHEAD }];
     } else {
       const retryAt = Date.now() + 15_000;
       if ((status >= 500 || status === 429) && retryAt < entry.at + DELIVERY_GRACE) {

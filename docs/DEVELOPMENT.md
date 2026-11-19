@@ -15,3 +15,5 @@ Run npm test for the planner, timer, migration, campaign allocation, and reminde
 Implementation is in progress. The next commits will replace this status with tested behavior and any remaining limitations. Each completed slice is committed and pushed to main with its documentation.
 
 The data and planner modules are implemented and covered by focused tests. Legacy browser tasks and unpadded water dates migrate to the expanded schema. Multi-day allocation respects explicit completion, a default four-hour daily focus allowance, and rest weekdays. UI integration and end-to-end verification remain in progress.
+
+The persistent reminder queue now accepts a bounded fortnight of invitations and wellbeing prompts, including rest-day hydration. Queue replay after restart, cancellation, missed reminders, and awake-hour timing have targeted tests. The frontend is integrating the whole-horizon queue alongside actual session phases.
