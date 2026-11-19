@@ -8,9 +8,13 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:browser": "node --test scripts/browser-smoke.cjs"
   },
   "dependencies": {
     "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.56.1"
   }
 }

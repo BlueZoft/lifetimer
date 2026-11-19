@@ -65,4 +65,6 @@ An active goal plan queues morning and evening check-ins, hydration, and focus i
 
 Run `npm test` for the planner, timer, migration, campaign allocation, and reminder server. Frontend changes appear after refreshing the browser. Restart `npm start` after server changes. The continuation guide describes the modules, stored data, validation, and current limits. [Development handoff](docs/DEVELOPMENT.md)
 
+The browser regression suite starts a temporary server and checks the actual screens, saved records, daily limits, and reminder queue. Install its Chromium once with `npx playwright-core install chromium`, then run `npm run test:browser`. To use an existing Chromium installation, set `LIFETIMER_BROWSER` to its executable path.
+
 The cloud environment verified timed delivery with a test transport and notification display in Chromium with a simulated push event. Verify the actual provider path on your machine with **Send test** and the app closed. The cloud could not establish a live browser subscription and its network policy blocked push providers.

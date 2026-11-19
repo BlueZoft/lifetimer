@@ -153,7 +153,7 @@ function calculatePlan(now) {
   };
   campaignPlan = buildCampaign(tasks, state.settings, rolling, new Date(at), history);
   plannedReminders = futureDayReminders(campaignPlan.days, state.settings, now, state.water).filter(reminder => {
-    const date = reminder.id.replace(/^(morning|evening)-/, '');
+    const date = dateKey(reminder.at);
     if (reminder.tag === 'morning-checkin') return !state.health[date]?.morning;
     if (reminder.tag === 'evening-checkin') return !state.health[date]?.evening;
     return true;
@@ -208,7 +208,9 @@ function renderPlan() {
     ? 'Add your first task to build a plan.'
     : state.tasks.some(task => !task.done && task.remainingMinutes <= 0)
       ? 'Check in on your tasks to confirm completion or estimate the remaining work.'
-      : plan.unscheduled.length ? 'No focus block fits this window. Unfinished tasks carry forward.' : 'All tasks are complete.';
+      : state.tasks.some(task => !task.done)
+        ? plan.isRest ? 'Rest day. Your work is planned for the available days.' : 'No focus block fits this window. Unfinished tasks carry forward.'
+        : 'All tasks are complete.';
   $('plan-subtitle').textContent = rows.length ? `${duration(plan.remainingMinutes)} unallocated in this window` : 'Your tasks and recovery breaks';
   const overflow = plan.unscheduled.reduce((total, task) => total + task.minutes, 0);
   $('plan-overflow').hidden = !overflow;
@@ -632,6 +634,12 @@ function renderHistory() {
     const snapshot = element('details');
     snapshot.append(element('summary', '', entry.kind === 'task' ? 'Goal at check-in' : 'Goal at session start'), element('p', '', entry.goal),
       element('p', '', entry.criteria || 'No success criteria entered'));
+    if (entry.checkpoints?.length) {
+      snapshot.append(element('p', 'timeline-meta', 'Original checkpoints'));
+      for (const checkpoint of entry.checkpoints) {
+        snapshot.append(element('p', '', checkpoint.title));
+      }
+    }
     row.append(snapshot);
     rows.append(row);
   }

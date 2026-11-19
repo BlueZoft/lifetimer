@@ -115,7 +115,7 @@ export function initHealth({ getState, onChange, notify, dayKey }) {
       }
       controls.append(group);
     }
-    activities.append(controls, node('p', 'health-caption', 'These are your confirmations of an activity. A reminder alone adds no log.'));
+    activities.append(controls, node('p', 'health-caption', 'Log activities after you complete them.'));
     content.append(activities);
     content.append(trends());
     panel.replaceChildren(heading, content);
@@ -275,7 +275,7 @@ export function initHealth({ getState, onChange, notify, dayKey }) {
           return next;
         });
         renderDialog();
-        notify('Check-in cleared', 'Other check-ins and activity logs were kept.');
+        notify('Check-in cleared', 'The selected entry was removed.');
       }));
     }
     const submit = node('button', 'button button-primary', 'Save check-in');
