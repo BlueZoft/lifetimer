@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "LifeTimer",
+  "short_name": "LifeTimer",
+  "description": "Plan a realistic day, then focus on one thing at a time.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101318",
+  "theme_color": "#101318",
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
