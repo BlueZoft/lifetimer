@@ -13,3 +13,5 @@ Goal plans cover 3, 7, or 14 calendar days, with an adjustable daily focus allow
 Run npm test for the planner, timer, migration, campaign allocation, and reminder server. Use Chromium to check creating/editing tasks, preserving baseline goals, ending and reviewing sessions, health check-ins, and mobile dialogs. Native push delivery still needs a compatible browser and reachable push provider.
 
 Implementation is in progress. The next commits will replace this status with tested behavior and any remaining limitations. Each completed slice is committed and pushed to main with its documentation.
+
+The data and planner modules are implemented and covered by focused tests. Legacy browser tasks and unpadded water dates migrate to the expanded schema. Multi-day allocation respects explicit completion, a default four-hour daily focus allowance, and rest weekdays. UI integration and end-to-end verification remain in progress.

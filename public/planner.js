@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   sleepHours: 8,
   focusMinutes: 40,
   waterLitres: 2.5,
+  dailyFocusHours: 4,
 });
 
 const DAY_MINUTES = 24 * 60;
@@ -36,6 +37,12 @@ function wholeMinutes(value) {
   return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
 }
 
+export function taskMinutesRemaining(task) {
+  if (task.done === true) return 0;
+  if (Number.isFinite(task.remainingMinutes)) return Math.max(0, Math.ceil(task.remainingMinutes));
+  return Math.max(0, wholeMinutes(task.minutes) - wholeMinutes(task.completedMinutes));
+}
+
 export function buildPlan(tasks, settings = DEFAULT_SETTINGS, now = new Date()) {
   const sleepHours = Number.isFinite(settings.sleepHours)
     ? Math.min(9, Math.max(7, settings.sleepHours))
@@ -44,6 +51,14 @@ export function buildPlan(tasks, settings = DEFAULT_SETTINGS, now = new Date()) 
   const focusMinutes = Math.min(90, Math.max(15, requestedFocus));
   const awakeMinutes = DAY_MINUTES - Math.round(sleepHours * 60);
   const workMinutes = awakeMinutes - DAILY_RESERVE_MINUTES;
+  const dailyFocusHours = Number.isFinite(settings.dailyFocusHours)
+    ? Math.min(13, Math.max(0, settings.dailyFocusHours))
+    : DEFAULT_SETTINGS.dailyFocusHours;
+  const usedFocusMinutes = Number.isFinite(settings.usedFocusMinutes)
+    ? Math.max(0, settings.usedFocusMinutes)
+    : 0;
+  const focusBudgetMinutes = Math.floor(dailyFocusHours * 60);
+  let remainingFocusMinutes = Math.max(0, Math.floor(focusBudgetMinutes - usedFocusMinutes));
   const wake = currentWake(now, settings.wakeTime, awakeMinutes);
   const windowEnd = wake + workMinutes * MINUTE;
   const windowStart = Math.min(windowEnd, Math.max(now.getTime(), wake));
@@ -67,9 +82,9 @@ export function buildPlan(tasks, settings = DEFAULT_SETTINGS, now = new Date()) 
   }
 
   for (const task of tasks) {
-    let outstanding = wholeMinutes(task.minutes) - wholeMinutes(task.completedMinutes);
-    while (outstanding > 0 && capacity() >= MINUTE) {
-      let minutes = Math.min(outstanding, focusMinutes, Math.floor(capacity() / MINUTE));
+    let outstanding = taskMinutesRemaining(task);
+    while (outstanding > 0 && remainingFocusMinutes > 0 && capacity() >= MINUTE) {
+      let minutes = Math.min(outstanding, focusMinutes, remainingFocusMinutes, Math.floor(capacity() / MINUTE));
       let duration = sessionPhases(minutes).at(-1).end;
       while (duration > capacity()) {
         minutes--;
@@ -77,6 +92,7 @@ export function buildPlan(tasks, settings = DEFAULT_SETTINGS, now = new Date()) 
       }
       addBlock(task, 'focus', minutes, duration);
       outstanding -= minutes;
+      remainingFocusMinutes -= minutes;
 
       const breakMinutes = Math.min(MOVEMENT_BREAK_MINUTES, Math.floor(capacity() / MINUTE));
       if (breakMinutes > 0) addBlock(task, 'break', breakMinutes);
@@ -86,5 +102,9 @@ export function buildPlan(tasks, settings = DEFAULT_SETTINGS, now = new Date()) 
     }
   }
 
-  return { blocks, unscheduled, workMinutes, remainingMinutes: Math.floor(capacity() / MINUTE), windowStart, windowEnd };
+  return {
+    blocks, unscheduled, workMinutes,
+    remainingMinutes: Math.floor(capacity() / MINUTE),
+    focusBudgetMinutes, remainingFocusMinutes, windowStart, windowEnd,
+  };
 }
