@@ -49,9 +49,17 @@ function writeJson(path, value) {
   }
 }
 
+function parseUrl(value, base) {
+  try {
+    return new URL(value, base);
+  } catch {
+    return null;
+  }
+}
+
 function parsePushEndpoint(value) {
   if (typeof value !== 'string' || value.length > 4096) return null;
-  const endpoint = URL.parse(value);
+  const endpoint = parseUrl(value);
   const valid = endpoint?.protocol === 'https:'
     && !endpoint.port && !endpoint.username && !endpoint.password && !endpoint.hash
     && (PUSH_HOSTS.has(endpoint.hostname)
@@ -125,11 +133,17 @@ function respondJson(response, status, value) {
 
 function getAllowedOrigin(value) {
   if (!value) return null;
-  const url = URL.parse(value);
+  const url = parseUrl(value);
   if (!url || url.protocol !== 'https:' || url.origin !== value) {
     throw new Error('LIFETIMER_ORIGIN must be an HTTPS origin with no trailing slash.');
   }
   return url;
+}
+
+function sameSubscription(first, second) {
+  return first?.endpoint === second.endpoint
+    && first?.keys.p256dh === second.keys.p256dh
+    && first?.keys.auth === second.keys.auth;
 }
 
 export function createLifeTimerServer({
@@ -160,10 +174,10 @@ export function createLifeTimerServer({
   }
 
   function replaceSchedule(nextSchedule, now) {
-    const sameSubscription = schedule.subscription?.endpoint === nextSchedule.subscription.endpoint;
-    const sent = sameSubscription ? schedule.sent.filter(entry => entry.until > now) : [];
+    const existingSubscription = sameSubscription(schedule.subscription, nextSchedule.subscription);
+    const sent = existingSubscription ? schedule.sent.filter(entry => entry.until > now) : [];
     const sentIds = new Set(sent.map(entry => entry.id));
-    const pending = new Map(sameSubscription ? schedule.reminders.map(entry => [entry.id, entry]) : []);
+    const pending = new Map(existingSubscription ? schedule.reminders.map(entry => [entry.id, entry]) : []);
     const reminders = nextSchedule.reminders
       .filter(entry => !sentIds.has(entry.id))
       .map(entry => {
@@ -205,7 +219,7 @@ export function createLifeTimerServer({
       status = error.statusCode ?? 503;
     }
 
-    if (schedule.subscription?.endpoint !== subscription.endpoint) return;
+    if (!sameSubscription(schedule.subscription, subscription)) return;
     if (status === 404 || status === 410) {
       saveSchedule(emptySchedule);
       return;
@@ -238,7 +252,7 @@ export function createLifeTimerServer({
       throw new RequestError(403, 'Host is not configured for LifeTimer.');
     }
     const expectedOrigin = host === allowedOrigin?.host ? allowedOrigin.origin : `http://${host}`;
-    const url = URL.parse(request.url, expectedOrigin);
+    const url = parseUrl(request.url, expectedOrigin);
     if (!url || url.origin !== expectedOrigin) throw new RequestError(400, 'Invalid request URL.');
 
     if (request.method === 'GET' && url.pathname === '/api/push/key') {
