@@ -1,6 +1,6 @@
 # LifeTimer
 
-LifeTimer fits your tasks into a realistic daily budget and prompts you to focus, look away, move, and drink water. It runs in the browser from a small local Node.js server.
+LifeTimer fits tasks into a daily focus allowance, prompts you to take breaks, and records how the work and the day went. It runs in your browser from a small local Node.js server.
 
 ## Install and run
 
@@ -13,23 +13,46 @@ npm start
 
 Open [LifeTimer](http://localhost:3000) and keep the terminal running. To give LifeTimer its own app window, look for **Install LifeTimer** or **Add to Home Screen** in a supported browser. Run `npm start` again after restarting the computer. Use the same browser profile and address each time, since browser data is scoped to both.
 
-## Plan and focus
+## Plan the work
 
-1. Set your wake time, sleep, focus length, and water goal in **Settings**. LifeTimer starts with eight hours of sleep, a 40-minute focus block, and a 2.5 L water goal. Sleep is adjustable from seven to nine hours. The planner reserves one hour each for personal care, exercise, meals, and buffer, leaving 11–13 workable hours that include focus breaks.
-2. Add tasks with estimated minutes. Use the arrows in **Tasks** to set their priority. **Today’s plan** splits unfinished work in that order and shows how much won’t fit in the current window. **Replan** rebuilds the schedule from the current time. LifeTimer puts the workable window immediately after your configured wake time and leaves the last four waking hours outside the plan. You choose when to handle the reserved activities.
-3. Select **Start focus** to begin the next task. You can pause and resume or end early. Focus time credits the task estimate, and unfinished tasks carry forward. Scheduled prompts invite you to start a block. You control when the timer starts.
-4. Use **250 mL** under **Hydration** to log water. The total resets for each local calendar day. Use the minus icon to undo an entry.
+1. Set wake time, sleep, focus block length, daily focus allowance, and water goal in **Settings**. Defaults are eight hours of sleep, 40-minute blocks, four hours of focus per day, and 2.5 L of water. The four-hour allowance is an adjustable planning default. Sleep is adjustable from seven to nine hours. One hour each is reserved for personal care, exercise, meals, and buffer, leaving an 11–13-hour window in which to place focus and recovery blocks.
+2. Add a task with estimated minutes, an original goal, success criteria, and optional checkpoints. A blank goal uses the task name. Use the arrows in **Tasks** to set priority. **Replan** fits remaining estimates into the time and focus allowance still available.
+3. Edit a task to revise its current success criteria or remaining minutes. The original goal and checkpoint wording stay recorded. Success criteria changes have a dated history. Checkpoints can be confirmed during a task check-in.
+4. For a longer effort, select **Start a plan** under **Goal plan**. Choose a goal, optional checkpoints, three days, one week, or one fortnight, and any rest weekdays. Plans can start today or tomorrow. The daily preview shows planned and logged focus, and reports work that exceeds the remaining capacity. **End plan** keeps its original commitment and checkpoint statuses in previous plan history.
+
+The workable window begins at wake time and ends four hours before the end of the waking period. You choose when to handle the reserved activities. The daily focus allowance applies within that window, and rest weekdays receive wellness prompts. All unfinished tasks participate in the active goal plan in priority order.
+
+## Focus and review outcomes
+
+Select **Start focus** to begin the next block. Pause and resume or end early as needed. Closing the tab during a running session lets its timer continue. A paused session that no longer fits its original working window is ended for review when you try to resume it.
+
+Ending a session records elapsed focus and opens a **Task check-in**. Choose **Needs more time** and enter the remaining estimate, or choose **Done** and confirm every original checkpoint. You can record what was accomplished, focus quality, and interruptions. Pauses provide an initial interruption count that you can correct.
+
+**Review later** leaves the session in **Work review** after closing the dialog or reloading. Review the pending session before starting another block on the same task. You can also open a task check-in directly from **Tasks**. Session history keeps the goal and success criteria that were recorded at session start.
+
+Existing browser data is upgraded in place. Older tasks already marked complete retain that state. New session time reduces the remaining estimate while task completion is confirmed through a check-in.
+
+## Check in on wellbeing
+
+**Daily check-ins** provides optional morning and evening entries. You can edit an earlier date, clear one entry, or leave any field blank.
+
+- Morning entries record sleep duration, sleep quality, and energy.
+- Evening entries record energy, focus quality, interruptions, exercise minutes, notes, and eye, neck, back, or wrist discomfort.
+- **Walk**, **Meal**, and **Screen break** log activities you confirm, with undo controls.
+- **Recent check-ins** shows seven or fourteen days of records, including sample counts for sleep and energy averages. Missing values remain blank in the record and appear as dashes in the table.
+- Lower energy or shorter sleep produces a suggestion to consider a lighter workload. You control changes to the focus allowance in **Settings**.
+
+Use **250 mL** under **Hydration** to log water and the minus icon to undo. The displayed total follows the local calendar day, and previous daily totals remain stored.
 
 ## Background reminders
 
-Open **Settings → Enable background reminders**, allow notifications, then select **Send test** and close the tab or app window. In-app prompts work while LifeTimer is open. Once background reminders are enabled, the server queues future prompts so a supported browser can deliver them after the tab closes.
+Open **Settings → Enable background reminders**, allow notifications, then select **Send test** and close the tab or app window. Keep the Node server running on a computer that stays awake and can reach the browser’s push provider. Browser background behavior, operating system notification settings, and force-quitting the browser affect delivery. [Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 
-The queue covers the current plan and waking day. Open LifeTimer at the start of the next day to schedule new reminders. Closing the window during a running focus session lets its timer continue. Pause it first if you want the countdown to wait.
+An active goal plan queues morning and evening check-ins, hydration, and focus invitations across its dates. Ordinary daily mode prepares the next fourteen wake dates. Opening or updating LifeTimer refreshes the queue. The saved queue survives a server restart and continues through its finite horizon while the app tab is closed. Actual session break prompts are added when you start a session. Completed health check-ins and a reached water goal suppress their remaining prompts when the app updates the queue.
 
-- Leave the Node server running on a computer that stays awake and can reach your browser’s push provider. Browser background behavior, operating system notification settings, and force-quitting the browser affect delivery. [Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 - Use localhost on your own computer or HTTPS for remote access. On iOS and iPadOS, install LifeTimer to the Home Screen from its HTTPS address, then enable notifications from the installed app. [WebKit guidance](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
-- The server listens on `127.0.0.1:3000` by default. Use `PORT` to change the port. For remote use, put it behind a private, authenticated HTTPS reverse proxy that preserves the external `Host` header, and set `LIFETIMER_ORIGIN` to the exact HTTPS origin without a trailing slash. Use one server instance and one active push subscription per user. The app has no built-in accounts.
-- Tasks, settings, water logs, and timer state stay in your browser profile on this device. When push is enabled, the server stores keys, your subscription, and pending reminder text and times in `.lifetimer/` or the directory set by `LIFETIMER_DATA_DIR`. Keep that directory private and persistent across server restarts.
+- The server listens on `127.0.0.1:3000` by default. Use `PORT` to change the port. For remote use, use a private, authenticated HTTPS reverse proxy that preserves the external `Host` header, and set `LIFETIMER_ORIGIN` to the exact HTTPS origin without a trailing slash. Use one server instance and one active push subscription per user.
+- Tasks, goals, timer state, session history, health entries, and water logs stay in the browser profile on this device. Push sends reminder text and times to the server. The server persists keys, the subscription, and pending reminders in `.lifetimer/` or the directory set by `LIFETIMER_DATA_DIR`. Keep that directory private and persistent.
 
 ## Wellness defaults
 
@@ -38,12 +61,8 @@ The queue covers the current plan and waking day. Open LifeTimer at the start of
 - **Movement** gets a five-minute walking break after 30 minutes of focus and a recovery break after a completed block, as the window permits. A small study measured blood sugar and blood pressure benefits from brief walks during prolonged sitting. [Columbia University Irving Medical Center](https://www.cuimc.columbia.edu/news/short-bursts-activity-can-offset-harmful-effects-sitting)
 - **Hydration** is a personal tracking goal between 2 and 3 L. Individual water needs vary, and food and other drinks contribute. [CDC](https://www.cdc.gov/healthy-weight-growth/water-healthy-drinks/index.html)
 
-## Developer handoff
+## Development
 
-Run `npm test` to check the planner, timer phases, schedule validation, and persisted reminder delivery with a test transport. The app serves static files directly. Saving a frontend change and refreshing the browser is enough to see it. Restart `npm start` after server changes.
+Run `npm test` for the planner, timer, migration, campaign allocation, and reminder server. Frontend changes appear after refreshing the browser. Restart `npm start` after server changes. The continuation guide describes the modules, stored data, validation, and current limits. [Development handoff](docs/DEVELOPMENT.md)
 
-- `public/planner.js` allocates focus and recovery in priority order and reports overflow. `public/session.js` defines timed focus, eye, movement, and recovery phases that the plan and live timer share.
-- `public/app.js` manages the dashboard and browser state. `public/push.js` manages subscriptions and schedule updates. `public/sw.js` turns push messages into native notifications and opens the app when a notification is selected.
-- `server.js` serves the app and persists and dispatches reminders. A schedule replaces the previous submission for that server. The server uses a provider allowlist, accepts schedules only for its configured origin, and stores delivery receipts to avoid resending an unchanged reminder.
-
-The planner uses durations and task priority. Calendar events, task deadlines, and synced task data are outside the current workflow. The cloud environment verified timed delivery with a test transport and notification display in Chromium with a simulated push event. Verify the actual provider path on your machine with **Send test** and the app closed. The cloud could not establish a live browser subscription and its network policy blocked push providers.
+The cloud environment verified timed delivery with a test transport and notification display in Chromium with a simulated push event. Verify the actual provider path on your machine with **Send test** and the app closed. The cloud could not establish a live browser subscription and its network policy blocked push providers.

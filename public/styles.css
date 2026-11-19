@@ -923,3 +923,44 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--mint); }
     animation-duration: 0s !important;
   }
 }
+
+textarea, select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #11141c;
+  color: var(--text);
+  font: inherit;
+}
+textarea { resize: vertical; }
+textarea:read-only { color: var(--muted); background: var(--surface); }
+select { min-height: 42px; }
+fieldset { min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: 9px; margin-block: 14px; }
+legend { padding-inline: 6px; color: var(--muted); font-size: .8rem; }
+.field-hint { color: var(--muted); font-size: .77rem; margin-block: 10px; }
+.dialog-body > .field { margin-top: 14px; }
+.review-list { display: grid; gap: 12px; margin-top: 14px; padding: 0; list-style: none; }
+.review-list li { padding-top: 12px; border-top: 1px solid var(--border); }
+.review-list p { font-size: .8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-list .button { min-height: 32px; margin-top: 8px; }
+.checkpoint-label { display: flex; gap: 9px; align-items: flex-start; margin-block: 8px; font-size: .83rem; overflow-wrap: anywhere; }
+.checkpoint-label input { width: 16px; height: 16px; accent-color: var(--mint); flex-shrink: 0; margin-top: 2px; }
+.weekday-choices { display: flex; flex-wrap: wrap; gap: 13px; }
+.campaign-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin-top: 16px; }
+.campaign-day { background: #11151d; border: 1px solid var(--border); border-radius: 9px; padding: 10px; display: grid; gap: 3px; font-size: .75rem; }
+.campaign-day.is-today { border-color: var(--mint); }
+.campaign-day strong { color: var(--mint); }
+.campaign-goal { font-size: 1.1rem; line-height: 1.4; margin-block: 14px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.history-summary { color: var(--muted); font-size: .8rem; }
+.history-title { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.task-item-info { min-width: 0; overflow-wrap: anywhere; }
+.task-item-info > strong { display: block; }
+.task-item .task-row-actions { flex-wrap: wrap; }
+.view-guidance p { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .task-item { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .task-row-actions { width: 100%; justify-content: flex-start; }
+  .campaign-days { grid-template-columns: repeat(3, minmax(0,1fr)); }
+}

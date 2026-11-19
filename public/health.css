@@ -1,0 +1,27 @@
+.health-content { display: grid; gap: 16px; }
+.health-actions { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.health-actions .button { min-height: 34px; padding: 7px 10px; font-size: .75rem; }
+.health-actions [aria-pressed="true"] { border-color: #597362; color: var(--mint); background: var(--mint-tint); }
+.health-caption { color: var(--muted); font-size: .75rem; line-height: 1.6; }
+.health-suggestion { border-left: 2px solid var(--mint); padding: 8px 12px; background: var(--mint-tint); color: var(--mint); font-size: .78rem; border-radius: 0 6px 6px 0; }
+.health-activities { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border); }
+.health-activities h3 { font-size: .8rem; font-weight: 650; }
+.health-activity-control { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; padding: 6px 0; }
+.health-count { color: var(--muted); font-size: .72rem; }
+.health-text-button { padding: 2px 0; border: 0; background: transparent; color: var(--mint); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: .73rem; }
+.health-trends { display: grid; padding-top: 13px; border-top: 1px solid var(--border); }
+.health-trends summary { color: var(--muted); font-size: .8rem; cursor: pointer; }
+.health-trends[open] > * + * { margin-top: 12px; }
+.health-trend-summary { margin: 0; padding-left: 17px; color: var(--muted); font-size: .73rem; }
+.health-table { width: 100%; border-collapse: collapse; color: var(--muted); font-size: .7rem; text-align: left; }
+.health-table th, .health-table td { padding: 7px 5px; border-bottom: 1px solid var(--border); }
+.health-table th { font-size: .67rem; font-weight: 550; }
+.health-table th:first-child, .health-table td:first-child { padding-left: 0; }
+.health-fields { display: grid; gap: 13px; }
+.health-discomfort { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.health-discomfort legend { padding-inline: 5px; color: var(--muted); font-size: .78rem; }
+.health-form textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface-deep); font: inherit; resize: vertical; }
+#health-dialog .health-caption { font-weight: 400; }
+@media (max-width: 500px) {
+  .health-discomfort { grid-template-columns: 1fr; }
+}

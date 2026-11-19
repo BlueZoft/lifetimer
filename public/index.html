@@ -11,6 +11,7 @@
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/health.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
@@ -101,6 +102,8 @@
               </div>
             </section>
 
+            <section id="campaign-panel" class="card campaign-card" aria-labelledby="campaign-heading"></section>
+
             <section class="card plan-card" aria-labelledby="plan-heading">
               <div class="card-header">
                 <div><h2 class="card-title" id="plan-heading">Today’s plan</h2><p class="card-subtitle" id="plan-subtitle">Your tasks and recovery breaks</p></div>
@@ -113,9 +116,11 @@
               </div>
               <p class="plan-overflow" id="plan-overflow" hidden></p>
             </section>
+            <section id="history-panel" class="card history-card" aria-labelledby="history-heading"></section>
           </div>
 
           <div class="side-column">
+            <section id="health-panel" class="card"></section>
             <section class="card budget-card" aria-labelledby="budget-heading">
               <div class="card-header"><div><h2 class="card-title" id="budget-heading">Day budget</h2><p class="card-subtitle">Every hour has a place</p></div><span class="card-emblem"><svg class="icon"><use href="#i-clock"/></svg></span></div>
               <div class="budget-total"><strong id="budget-work">12h</strong><span>workable</span></div>
@@ -125,6 +130,7 @@
                 <li class="budget-row"><span class="budget-dot budget-sleep"></span><span>Sleep</span><strong id="budget-sleep">8h</strong></li>
                 <li class="budget-row"><span class="budget-dot budget-reserved"></span><span>Daily essentials</span><strong>4h</strong></li>
               </ul>
+              <p id="focus-budget" class="budget-values"></p>
               <p class="budget-values">1h each for personal care, exercise, meals, and buffer.</p>
             </section>
 
@@ -156,8 +162,14 @@
       <form id="task-form">
         <div class="field-row">
           <label class="field">Task name<input name="title" type="text" required maxlength="100" placeholder="What are you working on?"></label>
-          <label class="field">Minutes<input name="minutes" type="number" required min="1" max="1440" value="40"></label>
+          <label class="field"><span id="task-minutes-label">Estimated minutes</span><input name="minutes" type="number" required min="1" max="1440" value="40"></label>
         </div>
+        <label class="field">Original goal<textarea name="goal" maxlength="500" rows="2" placeholder="What should this task achieve?"></textarea></label>
+        <label class="field">Success criteria<textarea name="criteria" maxlength="1000" rows="3" placeholder="How will you know the work is successful?"></textarea></label>
+        <label class="field">Original checkpoints, one per line<textarea name="checkpoints" maxlength="2000" rows="3" placeholder="Draft written
+Draft reviewed"></textarea></label>
+        <p class="field-hint" id="task-baseline-hint">Goal and checkpoint wording are kept as the original commitment. Success criteria can be revised.</p>
+        <details id="criteria-revisions" hidden><summary>Success criteria revisions</summary><ol id="criteria-history" class="review-list"></ol></details>
         <div class="dialog-actions">
           <button id="cancel-edit" class="button button-secondary" type="button" hidden>Cancel edit</button>
           <button class="button button-primary" type="submit"><svg class="icon"><use href="#i-plus"/></svg><span id="task-submit-label">Add task</span></button>
@@ -165,6 +177,44 @@
       </form>
       <ul class="task-list" id="task-list"></ul>
     </div>
+  </dialog>
+
+  <dialog id="health-dialog" aria-labelledby="health-dialog-heading"></dialog>
+
+  <dialog id="review-dialog" aria-labelledby="review-heading">
+    <div class="dialog-header"><div><h2 id="review-heading">Task check-in</h2><p id="review-task-title"></p></div><button class="button button-secondary button-icon" type="button" data-close aria-label="Close task check-in"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <form id="review-form" class="dialog-body">
+      <p id="review-session-summary" class="card-subtitle"></p>
+      <div class="view-guidance"><h3>Original goal</h3><p id="review-goal"></p><h3>Current success criteria</h3><p id="review-criteria"></p></div>
+      <fieldset id="review-checkpoints"><legend>Checkpoints achieved</legend><div id="review-checkpoint-list"></div></fieldset>
+      <div class="field-row">
+        <label class="field">Task outcome<select name="outcome" required><option value="">Choose an outcome</option><option value="continue">Needs more time</option><option value="done">Done</option></select></label>
+        <label class="field">Remaining minutes<input name="remainingMinutes" type="number" min="1" max="10080" required></label>
+      </div>
+      <label class="field">What was accomplished?<textarea name="notes" maxlength="2000" rows="3" placeholder="A short record of the work completed"></textarea></label>
+      <div class="field-row">
+        <label class="field">Focus quality<select name="quality"><option value="">Skip</option><option value="1">1 · Very difficult</option><option value="2">2 · Difficult</option><option value="3">3 · Okay</option><option value="4">4 · Good</option><option value="5">5 · Excellent</option></select></label>
+        <label class="field">Interruptions<input name="interruptions" type="number" min="0" max="1000" value="0"></label>
+      </div>
+      <p id="review-error" class="plan-overflow" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" class="button button-secondary" data-close>Review later</button><button class="button button-primary" type="submit">Save check-in</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="campaign-dialog" aria-labelledby="campaign-dialog-heading">
+    <div class="dialog-header"><div><h2 id="campaign-dialog-heading">Start a goal plan</h2><p>Set a clear outcome and give the work room to fit.</p></div><button class="button button-secondary button-icon" type="button" data-close aria-label="Close goal plan"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <form id="campaign-form" class="dialog-body">
+      <label class="field">Plan goal<textarea name="goal" maxlength="500" rows="2" required placeholder="The outcome you want to achieve"></textarea></label>
+      <label class="field">Plan checkpoints, one per line<textarea name="checkpoints" maxlength="2000" rows="3" placeholder="First draft ready
+Final review complete"></textarea></label>
+      <div class="field-row">
+        <label class="field">Start date<input name="startDate" type="date" required></label>
+        <label class="field">Duration<select name="days"><option value="3">3 days</option><option value="7">1 week</option><option value="14">1 fortnight</option></select></label>
+      </div>
+      <fieldset><legend>Rest days</legend><div class="weekday-choices" id="rest-weekdays"></div></fieldset>
+      <p class="field-hint">The original goal and checkpoint wording stay in the plan. Remaining task estimates can change as you learn.</p>
+      <div class="dialog-actions"><button type="submit" class="button button-primary">Start goal plan</button></div>
+    </form>
   </dialog>
 
   <dialog id="settings-dialog" aria-labelledby="settings-heading">
@@ -179,6 +229,7 @@
           <label class="field">Focus block (min)<input type="number" name="focusMinutes" min="15" max="90" required></label>
           <label class="field">Water goal (L)<input type="number" name="waterLitres" min="2" max="3" step="0.25" required></label>
         </div>
+        <label class="field">Daily focus allowance (hours)<input type="number" name="dailyFocusHours" min="0.5" max="12" step="0.5" required></label>
         <div class="dialog-actions"><button class="button button-primary" type="submit">Save settings</button></div>
       </form>
       <section class="view-guidance" aria-labelledby="reminders-heading">
